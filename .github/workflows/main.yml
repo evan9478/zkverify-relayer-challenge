@@ -1,0 +1,50 @@
+name: Generate and Submit ZK Proof
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-submit:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm install circomlib snarkjs axios
+
+    - name: Compile circuit
+      run: npx circom my_circuit.circom --r1cs --wasm --sym -o .
+
+    - name: Download Powers of Tau file
+      run: wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_12.ptau -O pot12_final.ptau
+
+    - name: Generate Keys
+      run: |
+        npx snarkjs groth16 setup my_circuit.r1cs pot12_final.ptau circuit_0000.zkey
+        npx snarkjs zkey contribute circuit_0000.zkey circuit_0001.zkey --name="GitHub Actions Contribution" -v
+        npx snarkjs zkey export verificationkey circuit_0001.zkey verification_key.json
+
+    - name: Generate Proof with random inputs
+      run: |
+        A=$((1 + RANDOM % 100))
+        B=$((1 + RANDOM % 100))
+        echo "{\"a\": \"$A\", \"b\": \"$B\"}" > input.json
+        echo "Generated inputs: a=$A, b=$B"
+    
+    - name: Calculate witness and create proof
+      run: |
+        npx snarkjs witness calculate my_circuit_js/my_circuit.wasm input.json witness.wtns
+        npx snarkjs groth16 prove circuit_0001.zkey witness.wtns proof.json public.json
+
+    - name: Submit Proof via Relayer
+      env:
+        ZKVERIFY_API_KEY: ${{ secrets.ZKVERIFY_API_KEY }}
+      run: node submit.js
