@@ -12,4 +12,4 @@ template MyCircuit() {
     c <== a*a + b;
 }
 
-component main = MyCircuit();s
+component main = MyCircuit();
