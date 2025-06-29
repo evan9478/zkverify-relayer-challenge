@@ -1,11 +1,11 @@
 pragma circom 2.0.0;
 
 template MyCircuit() {
-    // Inputs
+    // Inputs (এই লাইনগুলো আপনার কোডে ছিল না)
     signal input a;
     signal input b;
     
-    // Output
+    // Output (এই লাইনটিও আপনার কোডে ছিল না)
     signal output c;
     
     // Logic: c === a*a + b
