@@ -1,5 +1,4 @@
 pragma circom 2.0.0;
-
 template MyCircuit() {
     signal input a;
     signal input b;
@@ -7,5 +6,4 @@ template MyCircuit() {
     
     c <== a*a + b;
 }
-
 component main = MyCircuit();
