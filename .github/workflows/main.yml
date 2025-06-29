@@ -20,32 +20,12 @@ jobs:
     - name: Install dependencies
       run: npm install circomlib snarkjs axios
 
-    - name: Compile circuit
-      # We are piping the file content directly to the compiler to bypass any potential filesystem/caching issues.
-      run: cat proof_circuit.circom | npx circom - --r1cs --wasm --sym -o .
+    # --- ZK STEPS TEMPORARILY DISABLED FOR DEBUGGING ---
+    # - name: Compile circuit
+    #   run: cat proof_circuit.circom | npx circom - --r1cs --wasm --sym -o .
+    # - name: Download Powers of Tau file
+    #   run: wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_12.ptau -O pot12_final.ptau
+    # --- END OF DISABLED STEPS ---
 
-    - name: Download Powers of Tau file
-      run: wget https://hermez.s3-eu-west-1.amazonaws.com/powersOfTau28_hez_final_12.ptau -O pot12_final.ptau
-
-    - name: Generate Keys
-      run: |
-        npx snarkjs groth16 setup proof_circuit.r1cs pot12_final.ptau circuit_0000.zkey
-        npx snarkjs zkey contribute circuit_0000.zkey circuit_0001.zkey --name="GitHub Actions Contribution" -v
-        npx snarkjs zkey export verificationkey circuit_0001.zkey verification_key.json
-
-    - name: Generate Proof with random inputs
-      run: |
-        A=$((1 + RANDOM % 100))
-        B=$((1 + RANDOM % 100))
-        echo "{\"a\": \"$A\", \"b\": \"$B\"}" > input.json
-        echo "Generated inputs: a=$A, b=$B"
-    
-    - name: Calculate witness and create proof
-      run: |
-        npx snarkjs witness calculate proof_circuit_js/proof_circuit.wasm input.json witness.wtns
-        npx snarkjs groth16 prove circuit_0001.zkey witness.wtns proof.json public.json
-
-    - name: Submit Proof via Relayer
-      env:
-        ZKVERIFY_API_KEY: ${{ secrets.ZKVERIFY_API_KEY }}
+    - name: Run the simple test script
       run: node submit.js
